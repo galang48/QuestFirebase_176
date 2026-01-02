@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">MyFirebase</string>
     <string name="entry_siswa">Tambah Siswa</string>
+    <string name="back">back</string>
 </resources>
