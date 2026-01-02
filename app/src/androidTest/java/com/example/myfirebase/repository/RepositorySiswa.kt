@@ -1,0 +1,8 @@
+package com.example.myfirebase.repository
+
+import com.example.myfirebase.model.data.Siswa
+
+interface RepositorySiswa {
+    suspend fun getDataSiswa(): List<Siswa>
+    suspend fun postDataSiswa(siswa: Siswa)
+}
