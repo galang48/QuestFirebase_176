@@ -1,46 +1,41 @@
+
 package com.example.myfirebase.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.myfirebase.model.data.Siswa
+import com.example.myfirebase.model.data.DetailSiswa
+import com.example.myfirebase.model.data.UIStateSiswa
+import com.example.myfirebase.model.data.toDataSiswa
 import com.example.myfirebase.repository.RepositorySiswa
-import kotlinx.coroutines.launch
-import java.io.IOException
 
-sealed interface StatusUiSiswa {
-    data class Success(
-        val siswa: List<Siswa> = listOf(),
-    ) : StatusUiSiswa
-
-    object Error : StatusUiSiswa
-
-    object Loading : StatusUiSiswa
-}
-
-class HomeViewModel(
+class EntryViewModel(
     private val repositorySiswa: RepositorySiswa,
 ) : ViewModel() {
-    var statusUiSiswa: StatusUiSiswa by mutableStateOf(StatusUiSiswa.Loading)
+    var uiStateSiswa by mutableStateOf(UIStateSiswa())
         private set
 
-    init {
-        loadSiswa()
+    // Fungsi untuk memvalidasi input
+    private fun validasiInput(uiState: DetailSiswa = uiStateSiswa.detailSiswa): Boolean =
+        with(uiState) {
+            nama.isNotBlank() && alamat.isNotBlank() && telpon.isNotBlank()
+        }
+
+    fun updateUiState(detailSiswa: DetailSiswa) {
+        uiStateSiswa =
+            UIStateSiswa(
+                detailSiswa = detailSiswa,
+                isEntryValid = validasiInput(detailSiswa),
+            )
     }
 
-    fun loadSiswa() {
-        viewModelScope.launch {
-            statusUiSiswa = StatusUiSiswa.Loading
-            statusUiSiswa =
-                try {
-                    StatusUiSiswa.Success(repositorySiswa.getDataSiswa())
-                } catch (e: IOException) {
-                    StatusUiSiswa.Error
-                } catch (e: Exception) {
-                    StatusUiSiswa.Error
-                }
+    // Fungsi untuk menyimpan data yang di-entry
+    suspend fun addSiswa() {
+        if (validasiInput()) {
+            repositorySiswa.postDataSiswa(
+                uiStateSiswa.detailSiswa.toDataSiswa(),
+            )
         }
     }
 }
