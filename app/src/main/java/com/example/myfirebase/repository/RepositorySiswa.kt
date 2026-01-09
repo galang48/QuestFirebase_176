@@ -9,4 +9,6 @@ interface RepositorySiswa {
         id: Long,
         siswa: Siswa,
     )
+
+    suspend fun hapusSatuSiswa(id: Long)
 }
