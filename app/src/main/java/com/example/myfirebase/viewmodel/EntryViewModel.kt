@@ -4,37 +4,43 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.myfirebase.model.data.DetailSiswa
-import com.example.myfirebase.model.data.UIStateSiswa
-import com.example.myfirebase.model.data.toDataSiswa
+import androidx.lifecycle.viewModelScope
+import com.example.myfirebase.model.data.Siswa
 import com.example.myfirebase.repository.RepositorySiswa
+import kotlinx.coroutines.launch
+import java.io.IOException
 
-class EntryViewModel(
+sealed interface StatusUiSiswa {
+    data class Success(
+        val siswa: List<Siswa> = listOf(),
+    ) : StatusUiSiswa
+
+    object Error : StatusUiSiswa
+
+    object Loading : StatusUiSiswa
+}
+
+class HomeViewModel(
     private val repositorySiswa: RepositorySiswa,
 ) : ViewModel() {
-    var uiStateSiswa by mutableStateOf(UIStateSiswa())
+    var statusUiSiswa: StatusUiSiswa by mutableStateOf(StatusUiSiswa.Loading)
         private set
 
-    // Fungsi untuk memvalidasi input
-    private fun validasiInput(uiState: DetailSiswa = uiStateSiswa.detailSiswa): Boolean =
-        with(uiState) {
-            nama.isNotBlank() && alamat.isNotBlank() && telpon.isNotBlank()
-        }
-
-    fun updateUiState(detailSiswa: DetailSiswa) {
-        uiStateSiswa =
-            UIStateSiswa(
-                detailSiswa = detailSiswa,
-                isEntryValid = validasiInput(detailSiswa),
-            )
+    init {
+        loadSiswa()
     }
 
-    // Fungsi untuk menyimpan data yang di-entry
-    suspend fun addSiswa() {
-        if (validasiInput()) {
-            repositorySiswa.postDataSiswa(
-                uiStateSiswa.detailSiswa.toDataSiswa(),
-            )
+    fun loadSiswa() {
+        viewModelScope.launch {
+            statusUiSiswa = StatusUiSiswa.Loading
+            statusUiSiswa =
+                try {
+                    StatusUiSiswa.Success(repositorySiswa.getDataSiswa())
+                } catch (e: IOException) {
+                    StatusUiSiswa.Error
+                } catch (e: Exception) {
+                    StatusUiSiswa.Error
+                }
         }
     }
 }
